@@ -176,11 +176,12 @@ public:
         }
         else
         {
+            dt = m_step_adjuster.adjust_stepsize(coeff.m_eo, dt, m_xerr[1].m_v, in, m_stepper.dxdt());
+            
             if(coeff.m_eo < order_value)
             {
                 coeff.m_eo ++;
             }
-            dt = m_step_adjuster.adjust_stepsize(coeff.m_eo, dt, m_xerr[1].m_v, in, m_stepper.dxdt());
         }
 
         if(dt / dtPrev >= step_adjuster_type::threshold())

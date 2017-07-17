@@ -58,10 +58,12 @@ public:
     {
         for (size_t i=0; i<order_value+2; ++i)
         {
-            c[0][i] = 1.0/(i+1);
+            c[i] = 1.0/(i+1);
+            c[c_size+i] = 1.0/((i+1)*(i+2));
         }
 
-        g[0] = c[0][0];
+        g[0] = c[0];
+        g[1] = c[c_size];
 
         beta[0][0] = 1;
         beta[1][0] = 1;
@@ -88,14 +90,14 @@ public:
                 m_time_storage[i-1])/(m_time_storage[0] - m_time_storage[i]);
         }
 
-        for(size_t i=1+m_ns; i<m_eo+2 && i<m_steps_init+1; ++i)
+        for(size_t i=2+m_ns; i<m_eo+2 && i<m_steps_init+1; ++i)
         {
-            for(size_t j=0; j<m_eo+1; ++j)
+            for(size_t j=0; j<m_eo+1-i+1; ++j)
             {
-                c[i][j] = c[i-1][j] - c[i-1][j+1]*dt/(m_time_storage[0] + dt - m_time_storage[i-1]);
+                c[c_size*i+j] = c[c_size*(i-1)+j] - c[c_size*(i-1)+j+1]*dt/(m_time_storage[0] + dt - m_time_storage[i-1]);
             }
 
-            g[i] = c[i][0];
+            g[i] = c[c_size*i];
         }
     };
 
@@ -152,7 +154,9 @@ private:
     size_t m_ns;
 
     time_storage_type m_time_storage;
-    boost::array<boost::array<value_type, order_value + 2>, order_value + 2> c;
+    // boost::array<boost::array<value_type, order_value + 2>, order_value + 2> c;
+    static const size_t c_size = order_value + 2;
+    boost::array<value_type, c_size*c_size> c;
 
     algebra_type m_algebra;
 

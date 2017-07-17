@@ -123,6 +123,8 @@ public:
             m_coeff.predict(t, dt/static_cast< Time >(order_value));
             m_coeff.do_step(m_dxdt.m_v);
             m_coeff.confirm();
+            
+            t += dt/static_cast< Time >(order_value);
 
             if(m_coeff.m_eo < order_value)
             {
