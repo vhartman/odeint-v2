@@ -101,7 +101,7 @@ class StepAdjuster = detail::pid_step_adjuster< typename ErrorStepper::state_typ
     typename ErrorStepper::time_type,
     typename ErrorStepper::algebra_type,
     typename ErrorStepper::operations_type,
-    detail::H211PI
+    detail::BASIC
     >,
 class OrderAdjuster = default_order_adjuster< ErrorStepper::order_value,
     typename ErrorStepper::state_type,
@@ -182,7 +182,7 @@ public:
 
         time_type dtPrev = dt;
         size_t prevOrder = coeff.m_eo;
-        
+
         if(coeff.m_steps_init > coeff.m_eo)
         {
             m_order_adjuster.adjust_order(coeff.m_eo, m_xerr);
@@ -190,12 +190,15 @@ public:
         }
         else
         {
-            dt = m_step_adjuster.adjust_stepsize(coeff.m_eo, dt, m_xerr[1].m_v, in, m_stepper.dxdt());
-            
-            if(coeff.m_eo < order_value)
+            value_type errc = fabs(algebra_type().norm_inf(m_xerr[1].m_v));
+            value_type errp = fabs(algebra_type().norm_inf(m_xerr[2].m_v));
+
+            if(coeff.m_eo < order_value && errc > errp)
             {
                 coeff.m_eo ++;
             }
+
+            dt = m_step_adjuster.adjust_stepsize(coeff.m_eo, dt, m_xerr[1 + coeff.m_eo - prevOrder].m_v, in, m_stepper.dxdt());
         }
 
         if(dt / dtPrev >= step_adjuster_type::threshold())

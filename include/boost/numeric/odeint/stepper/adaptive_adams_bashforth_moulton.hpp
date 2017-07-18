@@ -128,12 +128,16 @@ public:
     template< class ExplicitStepper, class System >
     void initialize(ExplicitStepper stepper, System system, state_type &inOut, time_type &t, time_type dt)
     {
+        reset();
+
         m_dxdt_resizer.adjust_size( inOut , detail::bind( &stepper_type::template resize_dxdt_impl< state_type > , detail::ref( *this ) , detail::_1 ) );
 
+        system( inOut , m_dxdt.m_v , t );
         for( size_t i=0 ; i<order_value; ++i )
         {
-            system( inOut , m_dxdt.m_v , t );
             stepper.do_step_dxdt_impl( system, inOut, m_dxdt.m_v, t, dt/static_cast< Time >(order_value) );
+            
+            system( inOut , m_dxdt.m_v , t + dt/static_cast< Time >(order_value) );
             
             m_coeff.predict(t, dt/static_cast< Time >(order_value));
             m_coeff.do_step(m_dxdt.m_v);
@@ -151,6 +155,8 @@ public:
     template< class System >
     void initialize(System system, state_type &inOut, time_type &t, time_type dt)
     {
+        reset();
+
         for(size_t i=0; i<order_value; ++i)
         {
             this->do_step(system, inOut, t, dt/static_cast< Time >(order_value));
@@ -198,7 +204,7 @@ public:
         }
 
         // error for order above
-        if(m_coeff.m_steps_init > eO)
+        if(eO < order_value)
         {
             this->m_algebra.for_each2(xerr[2].m_v, m_coeff.phi[0][eO+1].m_v,
                 typename Operations::template scale_sum1<double>(dt*(m_coeff.g[eO+1]-m_coeff.g[eO])));

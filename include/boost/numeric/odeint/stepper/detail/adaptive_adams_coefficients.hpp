@@ -56,7 +56,6 @@ public:
     typedef Time time_type;
 
     typedef state_wrapper< deriv_type > wrapped_deriv_type;
-    typedef rotating_buffer< wrapped_deriv_type , steps+1 > step_storage_type; // +1 for moulton
     typedef rotating_buffer< time_type , steps+1 > time_storage_type;
 
     typedef Algebra algebra_type;
@@ -100,15 +99,17 @@ public:
 
         for(size_t i=1+m_ns; i<m_eo+1 && i<m_steps_init; ++i)
         {
-            beta[0][i] = beta[0][i-1]*(m_time_storage[0] + dt -
-                m_time_storage[i-1])/(m_time_storage[0] - m_time_storage[i]);
+            time_type diff = m_time_storage[0] - m_time_storage[i];
+
+            beta[0][i] = beta[0][i-1]*(m_time_storage[0] + dt - m_time_storage[i-1])/diff;
         }
 
         for(size_t i=2+m_ns; i<m_eo+2 && i<m_steps_init+1; ++i)
         {
+            time_type diff = m_time_storage[0] + dt - m_time_storage[i-1];
             for(size_t j=0; j<m_eo+1-i+1; ++j)
             {
-                c[c_size*i+j] = c[c_size*(i-1)+j] - c[c_size*(i-1)+j+1]*dt/(m_time_storage[0] + dt - m_time_storage[i-1]);
+                c[c_size*i+j] = c[c_size*(i-1)+j] - c[c_size*(i-1)+j+1]*dt/diff;
             }
 
             g[i] = c[c_size*i];
@@ -121,11 +122,11 @@ public:
 
         phi[o][0].m_v = dxdt;
 
-        for(size_t i=1; i<m_eo+2 && i<m_steps_init+1; ++i)
+        for(size_t i=1; i<m_eo+3 && i<m_steps_init+2 && i<order_value+2; ++i)
         {
             this->m_algebra.for_each3(phi[o][i].m_v, phi[o][i-1].m_v, phi[o+1][i-1].m_v,
                 typename Operations::template scale_sum2<double, double>(1.0, -beta[o][i-1]));
-        }   
+        }
     };
 
     void confirm()
@@ -140,7 +141,7 @@ public:
         }
     };
 
-    void reset() { m_eo = 1; };
+    void reset() { m_eo = 1; m_steps_init = 1; };
 
     size_t m_eo;
     size_t m_steps_init;
@@ -153,7 +154,6 @@ private:
     template< class StateType >
     bool resize_phi_impl( const StateType &x )
     {
-
         bool resized( false );
 
         for(size_t i=0; i<(order_value + 2); ++i)
@@ -168,7 +168,6 @@ private:
     size_t m_ns;
 
     time_storage_type m_time_storage;
-    // boost::array<boost::array<value_type, order_value + 2>, order_value + 2> c;
     static const size_t c_size = order_value + 2;
     boost::array<value_type, c_size*c_size> c;
 
