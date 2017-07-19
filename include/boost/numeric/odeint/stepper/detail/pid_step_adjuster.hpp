@@ -106,8 +106,7 @@ class Value = double,
 class Deriv = State,
 class Time = double,
 class Algebra = typename algebra_dispatcher< State >::algebra_type,
-class Operations = typename operations_dispatcher< Deriv >::operations_type,
-size_t Type = BASIC
+class Operations = typename operations_dispatcher< Deriv >::operations_type
 >
 struct pid_step_adjuster
 {
@@ -124,11 +123,11 @@ public:
 
     typedef rotating_buffer<state_type, 3> error_storage_type;
     typedef rotating_buffer<time_type, 3> time_storage_type;
-    typedef pid_step_adjuster_coefficients<Type> coeff_type;
+    typedef pid_step_adjuster_coefficients coeff_type;
 
-    pid_step_adjuster(double abs_tol = 1e-6, double rel_tol = 1e-6, time_type dtmax = 1.0)
+    pid_step_adjuster(double abs_tol = 1e-6, double rel_tol = 1e-6, time_type dtmax = 1.0, size_t adjuster_type = BASIC)
     :m_dtmax(dtmax), m_error_storage(), m_dt_storage(), m_init(0),
-    m_abs_tol(abs_tol), m_rel_tol(rel_tol)
+    m_abs_tol(abs_tol), m_rel_tol(rel_tol), m_coeff(adjuster_type)
     {};
 
     time_type adjust_stepsize(const size_t steps, time_type dt, state_type &err, const state_type &x, const deriv_type &dxdt)

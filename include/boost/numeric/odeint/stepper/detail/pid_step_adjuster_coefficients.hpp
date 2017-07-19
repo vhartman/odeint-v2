@@ -34,7 +34,100 @@ enum adjuster_type{
     H321
 };
 
-template<int Type>
+class pid_step_adjuster_coefficients : public boost::array<double, 5>
+{
+public:
+    pid_step_adjuster_coefficients(const size_t type = BASIC)
+    : boost::array<double, 5>()
+    {
+        switch(type)
+        {
+            case BASIC:
+            {
+                (*this)[0] = 1.0;
+                (*this)[1] = 0.0;
+                (*this)[2] = 0.0;
+                (*this)[3] = 0.0;
+                (*this)[4] = 0.0;
+                break;
+            }
+            case H0211:
+            {
+                (*this)[0] = 1.0 / 2.0;
+                (*this)[1] = 1.0 / 2.0;
+                (*this)[2] = 0.0;
+                (*this)[3] = 1.0 / 2.0;
+                (*this)[4] = 0.0;
+                break;
+            }
+            case H211b:
+            {
+                (*this)[0] = 1.0 / 5.0;
+                (*this)[1] = 2.0 / 5.0;
+                (*this)[2] = 0.0;
+                (*this)[3] = 1.0 / 5.0;
+                (*this)[4] = 0.0;
+                break;
+            }
+            case H211PI:
+            {
+                (*this)[0] = 1.0 / 6.0;
+                (*this)[1] = 2.0 / 6.0;
+                (*this)[2] = 0.0;
+                (*this)[3] = 0.0;
+                (*this)[4] = 0.0;
+                break;
+            }
+            case H0312:
+            {
+                (*this)[0] = 1.0 / 4.0;
+                (*this)[1] = 2.0 / 2.0;
+                (*this)[2] = 1.0 / 4.0;
+                (*this)[3] = 3.0 / 4.0;
+                (*this)[4] = 1.0 / 4.0;
+                break;
+            }
+            case H312b:
+            {
+                (*this)[0] = 1.0 / 6.0;
+                (*this)[1] = 2.0 / 6.0;
+                (*this)[2] = 1.0 / 6.0;
+                (*this)[3] = 3.0 / 6.0;
+                (*this)[4] = 1.0 / 6.0;
+                break;
+            }
+            case H312PID:
+            {
+                (*this)[0] = 1.0 / 18.0;
+                (*this)[1] = 2.0 / 9.0;
+                (*this)[2] = 1.0 / 18.0;
+                (*this)[3] = 0.0;
+                (*this)[4] = 0.0;
+                break;
+            }
+            case H0321:
+            {
+                (*this)[0] =  5.0 / 4.0;
+                (*this)[1] =  1.0 / 2.0;
+                (*this)[2] = -3.0 / 4.0;
+                (*this)[3] = -1.0 / 4.0;
+                (*this)[4] = -3.0 / 4.0;
+                break;
+            }
+            case H321:
+            {
+                (*this)[0] =  1.0 / 3.0;
+                (*this)[1] =  1.0 / 18.0;
+                (*this)[2] = -5.0 / 18.0;
+                (*this)[3] = -5.0 / 16.0;
+                (*this)[4] = -1.0 / 6.0;
+                break;
+            }
+        }
+    }
+};
+
+/*template<int Type>
 class pid_step_adjuster_coefficients;
 
 template<>
@@ -170,7 +263,7 @@ public:
         (*this)[3] = -5.0 / 16.0;
         (*this)[4] = -1.0 / 6.0;
     }
-};
+};*/
 
 } // detail
 } // odeint

@@ -100,8 +100,7 @@ class StepAdjuster = detail::pid_step_adjuster< typename ErrorStepper::state_typ
     typename ErrorStepper::deriv_type,
     typename ErrorStepper::time_type,
     typename ErrorStepper::algebra_type,
-    typename ErrorStepper::operations_type,
-    detail::BASIC
+    typename ErrorStepper::operations_type
     >,
 class OrderAdjuster = default_order_adjuster< ErrorStepper::order_value,
     typename ErrorStepper::state_type,
