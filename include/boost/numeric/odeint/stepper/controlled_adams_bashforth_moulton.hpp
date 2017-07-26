@@ -171,9 +171,11 @@ public:
 
         for( size_t i=0 ; i<order_value; ++i )
         {
-            do{
+            do
+            {
                 res = stepper.try_step( system, inOut, t, dt );
-            }while(res != success);
+            }
+            while(res != success);
 
             system( inOut , m_dxdt.m_v , t );
             

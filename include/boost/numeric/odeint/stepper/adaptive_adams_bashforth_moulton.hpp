@@ -129,21 +129,22 @@ public:
     void initialize(ExplicitStepper stepper, System system, state_type &inOut, time_type &t, time_type dt)
     {
         reset();
+        dt = dt/static_cast< time_type >(order_value);
 
         m_dxdt_resizer.adjust_size( inOut , detail::bind( &stepper_type::template resize_dxdt_impl< state_type > , detail::ref( *this ) , detail::_1 ) );
 
         system( inOut , m_dxdt.m_v , t );
         for( size_t i=0 ; i<order_value; ++i )
         {
-            stepper.do_step_dxdt_impl( system, inOut, m_dxdt.m_v, t, dt/static_cast< Time >(order_value) );
+            stepper.do_step_dxdt_impl( system, inOut, m_dxdt.m_v, t, dt );
             
-            system( inOut , m_dxdt.m_v , t + dt/static_cast< Time >(order_value) );
+            system( inOut , m_dxdt.m_v , t + dt);
             
-            m_coeff.predict(t, dt/static_cast< Time >(order_value));
+            m_coeff.predict(t, dt);
             m_coeff.do_step(m_dxdt.m_v);
             m_coeff.confirm();
             
-            t += dt/static_cast< Time >(order_value);
+            t += dt;
 
             if(m_coeff.m_eo < order_value)
             {
@@ -156,11 +157,12 @@ public:
     void initialize(System system, state_type &inOut, time_type &t, time_type dt)
     {
         reset();
+        dt = dt/static_cast< time_type >(order_value);
 
         for(size_t i=0; i<order_value; ++i)
         {
-            this->do_step(system, inOut, t, dt/static_cast< Time >(order_value));
-            t += dt/static_cast< Time >(order_value);
+            this->do_step(system, inOut, t, dt);
+            t += dt;
         };
     };
 
@@ -193,21 +195,18 @@ public:
             typename Operations::template scale_sum2<double, double>(1.0, dt*m_coeff.g[eO]));
 
         // error for current order
-        this->m_algebra.for_each2(xerr[1].m_v, m_coeff.phi[0][eO].m_v,
-            typename Operations::template scale_sum1<double>(dt*(m_coeff.g[eO]-m_coeff.g[eO-1])));
+        m_coeff.template estimate_error <1, state_type >(xerr[1].m_v, dt);
 
         // error for order below
         if (eO > 1)
         {
-            this->m_algebra.for_each2(xerr[0].m_v, m_coeff.phi[0][eO-1].m_v,
-                typename Operations::template scale_sum1<double>(dt*(m_coeff.g[eO-1]-m_coeff.g[eO-2])));
+            m_coeff.template estimate_error <0, state_type >(xerr[0].m_v, dt);
         }
 
         // error for order above
         if(eO < order_value)
         {
-            this->m_algebra.for_each2(xerr[2].m_v, m_coeff.phi[0][eO+1].m_v,
-                typename Operations::template scale_sum1<double>(dt*(m_coeff.g[eO+1]-m_coeff.g[eO])));
+            m_coeff.template estimate_error <2, state_type >(xerr[2].m_v, dt);
         }
     };
 

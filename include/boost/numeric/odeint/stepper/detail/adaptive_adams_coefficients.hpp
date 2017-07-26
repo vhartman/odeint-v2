@@ -141,6 +141,13 @@ public:
         }
     };
 
+    template < size_t k, class Error >
+    void estimate_error(Error &err, time_type dt)
+    {
+        this->m_algebra.for_each2(err, phi[0][m_eo-1+k].m_v,
+            typename Operations::template scale_sum1<double>(dt*(g[m_eo-1+k]-g[m_eo-2+k])));
+    };
+
     void reset() { m_eo = 1; m_steps_init = 1; };
 
     size_t m_eo;

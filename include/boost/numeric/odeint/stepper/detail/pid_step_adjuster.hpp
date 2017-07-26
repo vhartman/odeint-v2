@@ -55,6 +55,14 @@ public:
     :beta1(b1), beta2(b2), beta3(b3), alpha1(a1), alpha2(a2),
     dt1(_dt1), dt2(_dt2), dt3(_dt3),
     m_steps(steps)
+    {
+        m_time_frac = adapted_pow(fabs(dt1/dt2), -alpha1/(m_steps + 1))*
+            adapted_pow(fabs(dt2/dt3), -alpha2/(m_steps + 1));
+    };
+
+    pid_op(const size_t steps, const double b1)
+    :beta1(b1), beta2(0), beta3(0), alpha1(0), alpha2(0),
+    dt1(0), dt2(0), dt3(0), m_steps(steps)
     {};
 
     template<class T1, class T2, class T3, class T4>
@@ -65,8 +73,7 @@ public:
         t1 = adapted_pow(abs(t2), -beta1/(m_steps + 1)) *
             adapted_pow(abs(t3), -beta2/(m_steps + 1)) *
             adapted_pow(abs(t4), -beta3/(m_steps + 1)) *
-            adapted_pow(abs(dt1/dt2), -alpha1/(m_steps + 1))*
-            adapted_pow(abs(dt2/dt3), -alpha2/(m_steps + 1));
+            m_time_frac;
 
         t1 = 1/t1;
     };
@@ -98,6 +105,7 @@ private:
             return 1/pow(base, -exp);
         }
     };
+    time_type m_time_frac;
 };
 
 template<
@@ -142,13 +150,13 @@ public:
         if(m_init >= 2)
         {
             m_algebra.for_each4(err, m_error_storage[0], m_error_storage[1], m_error_storage[2],
-                pid_op<>(steps, m_dt_storage[0], m_dt_storage[1], m_dt_storage[2],
+                pid_op<value_type, time_type>(steps, m_dt_storage[0], m_dt_storage[1], m_dt_storage[2],
                     m_coeff[0], m_coeff[1], m_coeff[2], m_coeff[3], m_coeff[4]));
         }
         else
         {
             m_algebra.for_each2(err, m_error_storage[0],
-                pid_op<>(steps, m_dt_storage[0], m_dt_storage[1], m_dt_storage[2], 0.7));
+                pid_op<value_type, time_type>(steps, 0.7));
         }
 
         value_type ratio = 1 / m_algebra.norm_inf(err);
