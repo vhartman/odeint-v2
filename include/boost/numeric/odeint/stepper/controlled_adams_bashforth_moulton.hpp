@@ -77,8 +77,8 @@ public:
         }
         else
         {
-            if(errm < errc && 
-                errm < errp)
+            if(0.5*errm < errc && 
+                0.5*errm < errp)
             {
                 order--;
             }
@@ -113,8 +113,9 @@ class controlled_adams_bashforth_moulton
 {
 public:
     typedef ErrorStepper stepper_type;
+    typedef typename stepper_type::order_type order_type;
 
-    static const typename stepper_type::order_type order_value = stepper_type::order_value;
+    static const order_type order_value = stepper_type::order_value;
     
     typedef typename stepper_type::state_type state_type;
     typedef typename stepper_type::value_type value_type;
@@ -136,6 +137,8 @@ public:
     typedef typename stepper_type::coeff_type coeff_type;
     typedef controlled_adams_bashforth_moulton< ErrorStepper , StepAdjuster , OrderAdjuster , Resizer > controlled_stepper_type;
 
+    order_type order() const { return m_stepper.coeff().m_eo; };
+
     controlled_adams_bashforth_moulton(step_adjuster_type step_adjuster = step_adjuster_type())
     :m_stepper(),
     m_dxdt_resizer(), m_xerr_resizer(), m_xnew_resizer(),
@@ -153,6 +156,37 @@ public:
     {
         m_stepper.initialize(system, inOut, t, dt);
     };
+
+    template< class ExplicitStepper, class System >
+    void initialize_controlled(ExplicitStepper stepper, System system, state_type &inOut, time_type &t, time_type dt)
+    {
+        reset();
+
+        dt = dt/static_cast< time_type >(order_value);
+        coeff_type &coeff = m_stepper.coeff();
+
+        m_dxdt_resizer.adjust_size( inOut , detail::bind( &controlled_stepper_type::template resize_dxdt_impl< state_type > , detail::ref( *this ) , detail::_1 ) );
+
+        controlled_step_result res = fail;
+
+        for( size_t i=0 ; i<order_value; ++i )
+        {
+            do{
+                res = stepper.try_step( system, inOut, t, dt );
+            }while(res != success);
+
+            system( inOut , m_dxdt.m_v , t );
+            
+            coeff.predict(t-dt, dt);
+            coeff.do_step(m_dxdt.m_v);
+            coeff.confirm();
+
+            if(coeff.m_eo < order_value)
+            {
+                ++coeff.m_eo;
+            }
+        }
+    }
 
     template< class System >
     controlled_step_result try_step(System system, state_type & inOut, time_type &t, time_type &dt)
