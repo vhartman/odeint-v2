@@ -247,6 +247,7 @@ public:
         }
         else
         {
+            // std::cout << "fail" << std::endl;
             coeff.m_eo = prevOrder;
             return fail;
         }

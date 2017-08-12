@@ -70,9 +70,9 @@ public:
     {
         using std::abs;
 
-        t1 = adapted_pow(abs(t2), -beta1/(m_steps + 1)) *
-            adapted_pow(abs(t3), -beta2/(m_steps + 1)) *
-            adapted_pow(abs(t4), -beta3/(m_steps + 1)) *
+        t1 = adapted_pow(abs(t2*0.9), -beta1/(m_steps + 1)) *
+            adapted_pow(abs(t3*0.9), -beta2/(m_steps + 1)) *
+            adapted_pow(abs(t4*0.9), -beta3/(m_steps + 1)) *
             m_time_frac;
 
         t1 = 1/t1;
@@ -83,7 +83,7 @@ public:
     {
         using std::abs;
 
-        t1 = adapted_pow(abs(t2), -beta1/(m_steps + 1));
+        t1 = adapted_pow(abs(t2*0.9), -beta1/(m_steps + 1));
 
         t1 = 1/t1;
     };
@@ -150,13 +150,13 @@ public:
         if(m_init >= 2)
         {
             m_algebra.for_each4(err, m_error_storage[0], m_error_storage[1], m_error_storage[2],
-                pid_op<value_type, time_type>(steps, m_dt_storage[0], m_dt_storage[1], m_dt_storage[2],
+                pid_op<value_type, time_type>(steps-1, m_dt_storage[0], m_dt_storage[1], m_dt_storage[2],
                     m_coeff[0], m_coeff[1], m_coeff[2], m_coeff[3], m_coeff[4]));
         }
         else
         {
             m_algebra.for_each2(err, m_error_storage[0],
-                pid_op<value_type, time_type>(steps, 0.7));
+                pid_op<value_type, time_type>(steps-1, 0.7));
         }
 
         value_type ratio = 1 / m_algebra.norm_inf(err);

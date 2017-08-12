@@ -102,6 +102,8 @@ public:
             time_type diff = m_time_storage[0] - m_time_storage[i];
 
             beta[0][i] = beta[0][i-1]*(m_time_storage[0] + dt - m_time_storage[i-1])/diff;
+
+            // std::cout << t << " " << beta[0][i] << std::endl;
         }
 
         for(size_t i=2+m_ns; i<m_eo+2 && i<m_steps_init+1; ++i)
@@ -113,6 +115,7 @@ public:
             }
 
             g[i] = c[c_size*i];
+            // std::cout << g[i] << std::endl;
         }
     };
 
@@ -125,8 +128,11 @@ public:
         for(size_t i=1; i<m_eo+3 && i<m_steps_init+2 && i<order_value+2; ++i)
         {
             this->m_algebra.for_each3(phi[o][i].m_v, phi[o][i-1].m_v, phi[o+1][i-1].m_v,
-                typename Operations::template scale_sum2<double, double>(1.0, -beta[o][i-1]));
+                typename Operations::template scale_sum2<value_type, value_type>(1.0, -beta[o][i-1]));
+
+            // std::cout << o << " " << m_eo << " " << phi[o][i].m_v[0] << " " << phi[o][i-1].m_v[0] << " " << phi[o+1][i-1].m_v[0] << " " << -beta[o][i-1] << std::endl;
         }
+        // std::cout << std::endl;
     };
 
     void confirm()
@@ -145,7 +151,9 @@ public:
     void estimate_error(Error &err, time_type dt)
     {
         this->m_algebra.for_each2(err, phi[0][m_eo-1+k].m_v,
-            typename Operations::template scale_sum1<double>(dt*(g[m_eo-1+k]-g[m_eo-2+k])));
+            typename Operations::template scale_sum1<double>(dt*(g[m_eo-1+k] - g[m_eo-2+k])));
+
+        // std::cout << err[0] << std::endl;
     };
 
     void reset() { m_eo = 1; m_steps_init = 1; };
