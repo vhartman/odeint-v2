@@ -80,6 +80,21 @@ public:
 
         beta[0][0] = 1;
         beta[1][0] = 1;
+
+        gs[0] = 1.0;
+        gs[1] = -1.0/2;
+        gs[2] = -1.0/12;
+        gs[3] = -1.0/24;
+        gs[4] = -19.0/720;
+        gs[5] = -3.0/160;
+        gs[6] = -863.0/60480;
+        gs[7] = -275.0/24192;
+        gs[8] = -33953.0/3628800;
+        gs[9] = 35.0/4436;
+        gs[10] =  40.0/5891;
+        gs[11] = 37.0/6250;
+        gs[12] = 25.0/4771;
+        gs[13] = 40.0/8547;
     };
 
     void predict(time_type t, time_type dt)
@@ -100,10 +115,7 @@ public:
         for(size_t i=1+m_ns; i<m_eo+1 && i<m_steps_init; ++i)
         {
             time_type diff = m_time_storage[0] - m_time_storage[i];
-
             beta[0][i] = beta[0][i-1]*(m_time_storage[0] + dt - m_time_storage[i-1])/diff;
-
-            // std::cout << t << " " << beta[0][i] << std::endl;
         }
 
         for(size_t i=2+m_ns; i<m_eo+2 && i<m_steps_init+1; ++i)
@@ -115,7 +127,6 @@ public:
             }
 
             g[i] = c[c_size*i];
-            // std::cout << g[i] << std::endl;
         }
     };
 
@@ -127,12 +138,17 @@ public:
 
         for(size_t i=1; i<m_eo+3 && i<m_steps_init+2 && i<order_value+2; ++i)
         {
-            this->m_algebra.for_each3(phi[o][i].m_v, phi[o][i-1].m_v, phi[o+1][i-1].m_v,
-                typename Operations::template scale_sum2<value_type, value_type>(1.0, -beta[o][i-1]));
-
-            // std::cout << o << " " << m_eo << " " << phi[o][i].m_v[0] << " " << phi[o][i-1].m_v[0] << " " << phi[o+1][i-1].m_v[0] << " " << -beta[o][i-1] << std::endl;
+            if (o == 0)
+            {
+                this->m_algebra.for_each3(phi[o][i].m_v, phi[o][i-1].m_v, phi[o+1][i-1].m_v,
+                    typename Operations::template scale_sum2<value_type, value_type>(1.0, -beta[o][i-1]));
+            }
+            else
+            {
+                this->m_algebra.for_each2(phi[o][i].m_v, phi[o][i-1].m_v,
+                    typename Operations::template scale_sum1<value_type>(1.0));
+            }
         }
-        // std::cout << std::endl;
     };
 
     void confirm()
@@ -147,15 +163,6 @@ public:
         }
     };
 
-    template < size_t k, class Error >
-    void estimate_error(Error &err, time_type dt)
-    {
-        this->m_algebra.for_each2(err, phi[0][m_eo-1+k].m_v,
-            typename Operations::template scale_sum1<double>(dt*(g[m_eo-1+k] - g[m_eo-2+k])));
-
-        // std::cout << err[0] << std::endl;
-    };
-
     void reset() { m_eo = 1; m_steps_init = 1; };
 
     size_t m_eo;
@@ -164,6 +171,7 @@ public:
     rotating_buffer<boost::array<value_type, order_value+1>, 2> beta; // beta[0] = beta(n)
     rotating_buffer<boost::array<wrapped_deriv_type, order_value+2>, 3> phi; // phi[0] = phi(n+1)
     boost::array<value_type, order_value + 2> g;
+    boost::array<value_type, 14> gs;
 
 private:
     template< class StateType >
