@@ -39,7 +39,7 @@ public:
     : m_algebra( algebra )
     {};
 
-    void adjust_order(size_t &order, size_t init, boost::array<wrapped_state_type, 4> &xerr)
+    size_t adjust_order(size_t order, size_t init, boost::array<wrapped_state_type, 4> &xerr)
     {
         using std::abs;
 
@@ -70,25 +70,27 @@ public:
 
         if(init < order)
         {
-            ++order;
+            return order+1;
         }
-        else if(o_new == order -1)
+        else if(o_new == order - 1)
         {
-            --order;
+            return order-1;
         }
-        else if(order < MaxOrder)
+        else if(order <= MaxOrder)
         {
             value_type errp = abs(m_algebra.norm_inf(xerr[3].m_v));
 
             if(order > 1 && errm1 < errc && errp)
             {
-                --order;
+                return order-1;
             }
-            else if(errp < (0.5-0.25*order/MaxOrder) * errc)
+            else if(order < MaxOrder && errp < (0.5-0.25*order/MaxOrder) * errc)
             {
-                ++order;
+                return order+1;
             }
         }
+
+        return order;
     };
 private:
     algebra_type m_algebra;
@@ -219,7 +221,7 @@ public:
             }
 
             // adjust order
-            m_order_adjuster.adjust_order(coeff.m_eo, coeff.m_steps_init-1, m_xerr);
+            coeff.m_eo = m_order_adjuster.adjust_order(coeff.m_eo, coeff.m_steps_init-1, m_xerr);
 
             return success;
         }
@@ -242,7 +244,7 @@ private:
     {
         bool resized( false );
 
-        for(size_t i=0; i<4; ++i)
+        for(size_t i=0; i<m_xerr.size(); ++i)
         {
             resized |= adjust_size_by_resizeability( m_xerr[i], x, typename is_resizeable<state_type>::type() );
         }
